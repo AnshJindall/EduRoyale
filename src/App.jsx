@@ -8,12 +8,11 @@ import AuthModal from './components/AuthModal';
 
 import Home from './pages/Home';
 import Battle from './pages/Battle';
-import Learn from './pages/Learn'; // Your current modules page
+import Learn from './pages/Learn';
 import Ranks from './pages/Rank';
 import Guild from './pages/Guild';
 import ProfilePage from './components/profile/ProfilePage';
-
-// --> ADD THE NEW 3D SELECTION COMPONENT HERE
+import LessonModule from './pages/LessonModule';
 import SubjectSelection from './pages/SubjectSelection'; 
 
 export default function App() {
@@ -36,6 +35,7 @@ export default function App() {
           {/* --> CHANGED ROUTING FOR LEARN SECTION */}
           <Route path="/learn" element={<SubjectSelection />} /> 
           <Route path="/learn/:subjectId" element={<Learn />} /> 
+          <Route path="/learn/module/:id" element={<LessonModule />} />
           
         </Routes>
       </BrowserRouter>

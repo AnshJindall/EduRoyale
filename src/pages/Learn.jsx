@@ -5,14 +5,36 @@ import { useAuth } from '../context/AuthContext';
 import '../styles/learn.css';
 import { MASCOT, MASCOT_ALT } from '../mascot';
 
+// Maps URL param (e.g. 'dsa') → actual subject value stored in Supabase
+const SUBJECT_MAP = {
+  'dsa':    'Data Structures & Algorithms',
+  'dbms':   'Database Management',
+  'os':     'Operating Systems',
+  'cn':     'Computer Networks',
+  'ml':     'Machine Learning',
+  'ph11':   'Physics',
+  'ch11':   'Chemistry',
+  'ma11':   'Mathematics',
+  'bi11':   'Biology',
+  'cs11':   'Computer Science',
+  'ph12':   'Physics',
+  'ch12':   'Chemistry',
+  'ma12':   'Mathematics',
+  'bi12':   'Biology',
+  'cs12':   'Computer Science',
+};
+
 export default function Learn() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { subjectId } = useParams(); // Catches the 'dsa' from /learn/dsa
-  
+  const { subjectId } = useParams();
+
+  // Resolve the initial filter from the URL param
+  const resolvedSubject = subjectId ? (SUBJECT_MAP[subjectId] ?? 'All') : 'All';
+
   const [modules, setModules] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeSubject, setActiveSubject] = useState('All');
+  const [activeSubject, setActiveSubject] = useState(resolvedSubject);
 
   useEffect(() => {
     async function fetchModules() {
@@ -43,15 +65,9 @@ export default function Learn() {
   // Get unique subjects for the tabs
   const subjects = ['All', ...new Set(modules.map(m => m.subject))];
 
-  const handleStartModule = (moduleId) => {
-    if (!user) {
-      alert("Please login to start a module and earn XP!");
-      return;
-    }
-    // Here you would route them to the actual lesson page
-    // e.g., navigate(`/learn/${moduleId}`)
-    console.log(`Starting module: ${moduleId}`);
-    alert("Module started! (Add routing here later)");
+  const handleStartModule = (moduleId, isLocked) => {
+    if (isLocked) return;
+    navigate(`/learn/module/${moduleId}`);
   };
 
   if (loading) return <div style={{ color: 'var(--white)', padding: '100px', textAlign: 'center', fontFamily: '"Press Start 2P", monospace' }}>LOADING DATABANKS...</div>;
@@ -136,7 +152,7 @@ export default function Learn() {
               <button 
                 className={`px-btn ${mod.is_locked ? 'px-btn-o' : 'px-btn-b'}`} 
                 style={{ width: '100%', justifyContent: 'center' }}
-                onClick={() => handleStartModule(mod.id)}
+                onClick={() => handleStartModule(mod.id, mod.is_locked)}
                 disabled={mod.is_locked}
               >
                 {mod.is_locked ? 'LOCKED' : 'INITIALIZE ▶'}
