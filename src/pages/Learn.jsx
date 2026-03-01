@@ -5,41 +5,28 @@ import { useAuth } from '../context/AuthContext';
 import '../styles/learn.css';
 import { MASCOT, MASCOT_ALT } from '../mascot';
 
-// Maps URL param (e.g. 'dsa') → actual subject value stored in Supabase
-const SUBJECT_MAP = {
-  'dsa':    'Data Structures & Algorithms',
-  'dbms':   'Database Management',
-  'os':     'Operating Systems',
-  'cn':     'Computer Networks',
-  'ml':     'Machine Learning',
-  'ph11':   'Physics',
-  'ch11':   'Chemistry',
-  'ma11':   'Mathematics',
-  'bi11':   'Biology',
-  'cs11':   'Computer Science',
-  'ph12':   'Physics',
-  'ch12':   'Chemistry',
-  'ma12':   'Mathematics',
-  'bi12':   'Biology',
-  'cs12':   'Computer Science',
-};
-
 export default function Learn() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { subjectId } = useParams();
-
-  // Resolve the initial filter from the URL param
-  const resolvedSubject = subjectId ? (SUBJECT_MAP[subjectId] ?? 'All') : 'All';
-
+  const { subjectId } = useParams(); // Catches the 'dsa' from /learn/dsa
+  
   const [modules, setModules] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeSubject, setActiveSubject] = useState(resolvedSubject);
+
+  // Auto-set filter from URL param: /learn/dsa → filter to 'DSA'
+  // Normalize: subjectId 'dsa' → match against module.subject 'DSA' (case-insensitive)
+  const [activeSubject, setActiveSubject] = useState(
+    subjectId ? subjectId.toUpperCase() : 'All'
+  );
+
+  useEffect(() => {
+    // Re-sync filter if the URL param changes (e.g. navigating between subjects)
+    setActiveSubject(subjectId ? subjectId.toUpperCase() : 'All');
+  }, [subjectId]);
 
   useEffect(() => {
     async function fetchModules() {
       try {
-        // Fetch all learning modules from Supabase
         const { data, error } = await supabase
           .from('modules')
           .select('*')
@@ -58,16 +45,20 @@ export default function Learn() {
   }, []);
 
   // Filter modules based on the selected subject tab
-  const filteredModules = activeSubject === 'All' 
-    ? modules 
-    : modules.filter(m => m.subject === activeSubject);
+  // Support both exact match and case-insensitive partial match (e.g. 'DSA' matches subject 'DSA')
+  const filteredModules = activeSubject === 'All'
+    ? modules
+    : modules.filter(m =>
+        m.subject && m.subject.toUpperCase() === activeSubject.toUpperCase()
+      );
 
   // Get unique subjects for the tabs
-  const subjects = ['All', ...new Set(modules.map(m => m.subject))];
+  const subjects = ['All', ...new Set(modules.map(m => m.subject).filter(Boolean))];
 
-  const handleStartModule = (moduleId, isLocked) => {
-    if (isLocked) return;
-    navigate(`/learn/module/${moduleId}`);
+  const handleStartModule = (mod) => {
+    // Route to lesson viewer: /learn/<subjectId>/<moduleId>
+    const subject = subjectId || (mod.subject ? mod.subject.toLowerCase() : 'general');
+    navigate(`/learn/${subject}/${mod.id}`);
   };
 
   if (loading) return <div style={{ color: 'var(--white)', padding: '100px', textAlign: 'center', fontFamily: '"Press Start 2P", monospace' }}>LOADING DATABANKS...</div>;
@@ -152,7 +143,7 @@ export default function Learn() {
               <button 
                 className={`px-btn ${mod.is_locked ? 'px-btn-o' : 'px-btn-b'}`} 
                 style={{ width: '100%', justifyContent: 'center' }}
-                onClick={() => handleStartModule(mod.id, mod.is_locked)}
+                onClick={() => handleStartModule(mod)}
                 disabled={mod.is_locked}
               >
                 {mod.is_locked ? 'LOCKED' : 'INITIALIZE ▶'}

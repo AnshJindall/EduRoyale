@@ -18,26 +18,25 @@ export default function SubjectSelection() {
     // ── COURSE DATA ──
     const COURSES = {
       college: [
-        // Notice the URL here is just 'dsa'
         { id: 'dsa',  label: 'DATA STRUCTURES\n& ALGORITHMS', icon: '🌲', color: 0x3dff9a, hex: '#3dff9a', url: 'dsa' },
-        { id: 'dbms', label: 'DATABASE\nMANAGEMENT',          icon: '🗄️', color: 0x3cacff, hex: '#3cacff' },
-        { id: 'os',   label: 'OPERATING\nSYSTEMS',            icon: '⚙️', color: 0xa259ff, hex: '#a259ff' },
-        { id: 'cn',   label: 'COMPUTER\nNETWORKS',            icon: '🌐', color: 0xff6b35, hex: '#ff6b35' },
-        { id: 'ml',   label: 'MACHINE\nLEARNING',             icon: '🤖', color: 0xffd60a, hex: '#ffd60a' },
+        { id: 'dbms', label: 'DATABASE\nMANAGEMENT',          icon: '🗄️', color: 0x3cacff, hex: '#3cacff', url: 'dbms' },
+        { id: 'os',   label: 'OPERATING\nSYSTEMS',            icon: '⚙️', color: 0xa259ff, hex: '#a259ff', url: 'os' },
+        { id: 'cn',   label: 'COMPUTER\nNETWORKS',            icon: '🌐', color: 0xff6b35, hex: '#ff6b35', url: 'cn' },
+        { id: 'ml',   label: 'MACHINE\nLEARNING',             icon: '🤖', color: 0xffd60a, hex: '#ffd60a', url: 'ml' },
       ],
       class11: [
-        { id: 'ph11', label: 'PHYSICS',           icon: '⚡', color: 0x3cacff, hex: '#3cacff' },
-        { id: 'ch11', label: 'CHEMISTRY',         icon: '🧪', color: 0x3dff9a, hex: '#3dff9a' },
-        { id: 'ma11', label: 'MATHEMATICS',       icon: '📐', color: 0xffd60a, hex: '#ffd60a' },
-        { id: 'bi11', label: 'BIOLOGY',           icon: '🧬', color: 0xff6b35, hex: '#ff6b35' },
-        { id: 'cs11', label: 'COMPUTER\nSCIENCE', icon: '💻', color: 0xa259ff, hex: '#a259ff' },
+        { id: 'ph11', label: 'PHYSICS',           icon: '⚡', color: 0x3cacff, hex: '#3cacff', url: 'physics-11' },
+        { id: 'ch11', label: 'CHEMISTRY',         icon: '🧪', color: 0x3dff9a, hex: '#3dff9a', url: 'chemistry-11' },
+        { id: 'ma11', label: 'MATHEMATICS',       icon: '📐', color: 0xffd60a, hex: '#ffd60a', url: 'maths-11' },
+        { id: 'bi11', label: 'BIOLOGY',           icon: '🧬', color: 0xff6b35, hex: '#ff6b35', url: 'biology-11' },
+        { id: 'cs11', label: 'COMPUTER\nSCIENCE', icon: '💻', color: 0xa259ff, hex: '#a259ff', url: 'cs-11' },
       ],
       class12: [
-        { id: 'ph12', label: 'PHYSICS',           icon: '⚡', color: 0x3cacff, hex: '#3cacff' },
-        { id: 'ch12', label: 'CHEMISTRY',         icon: '🧪', color: 0x3dff9a, hex: '#3dff9a' },
-        { id: 'ma12', label: 'MATHEMATICS',       icon: '📐', color: 0xffd60a, hex: '#ffd60a' },
-        { id: 'bi12', label: 'BIOLOGY',           icon: '🧬', color: 0xff6b35, hex: '#ff6b35' },
-        { id: 'cs12', label: 'COMPUTER\nSCIENCE', icon: '💻', color: 0xa259ff, hex: '#a259ff' },
+        { id: 'ph12', label: 'PHYSICS',           icon: '⚡', color: 0x3cacff, hex: '#3cacff', url: 'physics-12' },
+        { id: 'ch12', label: 'CHEMISTRY',         icon: '🧪', color: 0x3dff9a, hex: '#3dff9a', url: 'chemistry-12' },
+        { id: 'ma12', label: 'MATHEMATICS',       icon: '📐', color: 0xffd60a, hex: '#ffd60a', url: 'maths-12' },
+        { id: 'bi12', label: 'BIOLOGY',           icon: '🧬', color: 0xff6b35, hex: '#ff6b35', url: 'biology-12' },
+        { id: 'cs12', label: 'COMPUTER\nSCIENCE', icon: '💻', color: 0xa259ff, hex: '#a259ff', url: 'cs-12' },
       ],
     };
 
@@ -255,9 +254,10 @@ export default function SubjectSelection() {
     };
 
     const onClick = () => {
-      if (!hovered || !hovered.userData.url) return;
-      // ROUTES TO /learn/dsa
-      navigate(`/learn/${hovered.userData.url}`);
+      if (!hovered) return;
+      const dest = hovered.userData.url || hovered.userData.id;
+      if (!dest) return;
+      navigate(`/learn/${dest}`);
     };
 
     let scrollAccum = 0;
