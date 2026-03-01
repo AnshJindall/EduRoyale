@@ -1,3 +1,291 @@
+#!/bin/bash
+# Run this from the ROOT of your EduRoyale project folder
+# e.g.: cd /path/to/EduRoyale && bash patch.sh
+
+echo "🔧 Patching EduRoyale..."
+
+# ── 1. src/App.jsx ─────────────────────────────────────────────
+cat > src/App.jsx << 'ENDOFFILE'
+import { useState } from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext'; 
+
+import CustomCursor from './components/CustomCursor';
+import Navbar from './components/Navbar';
+import AuthModal from './components/AuthModal';
+
+import Home from './pages/Home';
+import Battle from './pages/Battle';
+import Learn from './pages/Learn';
+import Ranks from './pages/Rank';
+import Guild from './pages/Guild';
+import ProfilePage from './components/profile/ProfilePage';
+import SubjectSelection from './pages/SubjectSelection';
+import LessonViewer from './pages/LessonViewer';
+
+export default function App() {
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <CustomCursor />
+        <Navbar onOpenAuth={() => setIsAuthOpen(true)} />
+        <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
+        
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/guild" element={<Guild />} />        
+          <Route path="/battle" element={<Battle />} />
+          <Route path="/ranks" element={<Ranks />} />
+          <Route path="/learn" element={<SubjectSelection />} />
+          <Route path="/learn/:subjectId" element={<Learn />} />
+          <Route path="/learn/:subjectId/:lessonId" element={<LessonViewer />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
+  );
+}
+ENDOFFILE
+echo "✅ src/App.jsx done"
+
+# ── 2. src/pages/Learn.jsx ─────────────────────────────────────
+cat > src/pages/Learn.jsx << 'ENDOFFILE'
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { supabase } from '../lib/supabaseClient';
+import { useAuth } from '../context/AuthContext';
+import '../styles/learn.css';
+import { MASCOT, MASCOT_ALT } from '../mascot';
+
+export default function Learn() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { subjectId } = useParams();
+
+  const [modules, setModules] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeSubject, setActiveSubject] = useState(
+    subjectId ? subjectId.toUpperCase() : 'All'
+  );
+
+  useEffect(() => {
+    setActiveSubject(subjectId ? subjectId.toUpperCase() : 'All');
+  }, [subjectId]);
+
+  useEffect(() => {
+    async function fetchModules() {
+      try {
+        const { data, error } = await supabase
+          .from('modules')
+          .select('*')
+          .order('created_at', { ascending: true });
+        if (error) throw error;
+        if (data) setModules(data);
+      } catch (error) {
+        console.error('Error fetching modules:', error.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchModules();
+  }, []);
+
+  const filteredModules = activeSubject === 'All'
+    ? modules
+    : modules.filter(m => m.subject && m.subject.toUpperCase() === activeSubject.toUpperCase());
+
+  const subjects = ['All', ...new Set(modules.map(m => m.subject).filter(Boolean))];
+
+  const handleStartModule = (mod) => {
+    const subject = subjectId || (mod.subject ? mod.subject.toLowerCase() : 'general');
+    navigate(`/learn/${subject}/${mod.id}`);
+  };
+
+  if (loading) return (
+    <div style={{ color: 'var(--white)', padding: '100px', textAlign: 'center', fontFamily: '"Press Start 2P", monospace' }}>
+      LOADING DATABANKS...
+    </div>
+  );
+
+  return (
+    <div className="page-wrap">
+      <button
+        onClick={() => navigate('/learn')}
+        className="px-btn px-btn-o"
+        style={{ marginBottom: '24px', fontSize: '10px' }}
+      >
+        ◀ BACK TO SUBJECTS
+      </button>
+
+      <div className="page-header" style={{ marginBottom: '32px', position: 'relative', display: 'flex', alignItems: 'flex-start', gap: '24px' }}>
+        <div style={{ flex: 1 }}>
+          <div className="chip chip-b">📖 KNOWLEDGE ARCHIVE</div>
+          <h1 style={{ color: 'var(--blue)', textShadow: '3px 3px 0 var(--bd)', marginTop: '12px' }}>
+            {subjectId ? `${subjectId.toUpperCase()} MODULES` : 'LEARNING MODULES'}
+          </h1>
+          <p style={{ color: 'var(--muted)', marginTop: '8px' }}>Master concepts to increase your global ELO and unlock new battle arenas.</p>
+        </div>
+        <img src={MASCOT.study} alt={MASCOT_ALT} style={{
+          width: 'clamp(130px, 14vw, 200px)',
+          flexShrink: 0,
+          filter: 'drop-shadow(0 0 24px rgba(162,89,255,0.5))',
+          animation: 'mascot-float 3s ease-in-out infinite',
+          marginTop: '-10px',
+        }} draggable="false" />
+      </div>
+
+      {/* Subject Filter Tabs */}
+      <div style={{ display: 'flex', gap: '12px', marginBottom: '32px', overflowX: 'auto', paddingBottom: '8px' }}>
+        {subjects.map(subject => (
+          <button
+            key={subject}
+            onClick={() => setActiveSubject(subject)}
+            className={`px-btn ${activeSubject === subject ? 'px-btn-b' : 'px-btn-o'}`}
+          >
+            {subject.toUpperCase()}
+          </button>
+        ))}
+      </div>
+
+      {/* Module Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '24px' }}>
+        {filteredModules.length === 0 ? (
+          <div style={{ color: 'var(--muted)' }}>No modules found for this subject.</div>
+        ) : (
+          filteredModules.map((mod) => (
+            <div key={mod.id} style={{
+              background: 'var(--card)',
+              border: `3px solid ${mod.is_locked ? 'var(--border)' : 'var(--blue)'}`,
+              padding: '20px',
+              display: 'flex',
+              flexDirection: 'column',
+              opacity: mod.is_locked ? 0.6 : 1
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
+                <span className="chip" style={{
+                  color: mod.difficulty === 'Beginner' ? 'var(--green)' : mod.difficulty === 'Boss' ? 'var(--pink)' : 'var(--yellow)',
+                  borderColor: mod.difficulty === 'Beginner' ? 'var(--green)' : mod.difficulty === 'Boss' ? 'var(--pink)' : 'var(--yellow)'
+                }}>
+                  {mod.difficulty ? mod.difficulty.toUpperCase() : 'STANDARD'}
+                </span>
+                <span style={{ color: 'var(--yellow)', fontFamily: '"Press Start 2P", monospace', fontSize: '10px' }}>
+                  +{mod.xp_reward} XP
+                </span>
+              </div>
+              <h2 style={{ fontFamily: '"Press Start 2P", monospace', fontSize: '14px', color: 'var(--white)', marginBottom: '8px', lineHeight: '1.4' }}>
+                {mod.title}
+              </h2>
+              <p style={{ color: 'var(--muted)', fontSize: '16px', marginBottom: '24px', flex: 1 }}>
+                {mod.description}
+              </p>
+              <button
+                className={`px-btn ${mod.is_locked ? 'px-btn-o' : 'px-btn-b'}`}
+                style={{ width: '100%', justifyContent: 'center' }}
+                onClick={() => handleStartModule(mod)}
+                disabled={mod.is_locked}
+              >
+                {mod.is_locked ? 'LOCKED' : 'INITIALIZE ▶'}
+              </button>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+ENDOFFILE
+echo "✅ src/pages/Learn.jsx done"
+
+# ── 3. src/pages/SubjectSelection.jsx ─────────────────────────
+# Only patch the COURSES data and the onClick handler inside the existing file
+# using node inline script to avoid overwriting the massive Three.js scene
+
+node - << 'JSEOF'
+const fs = require('fs');
+const path = 'src/pages/SubjectSelection.jsx';
+let code = fs.readFileSync(path, 'utf8');
+
+// Fix 1: Add url fields to every course that's missing one
+const oldCourses = `      college: [
+        // Notice the URL here is just 'dsa'
+        { id: 'dsa',  label: 'DATA STRUCTURES\\n& ALGORITHMS', icon: '🌲', color: 0x3dff9a, hex: '#3dff9a', url: 'dsa' },
+        { id: 'dbms', label: 'DATABASE\\nMANAGEMENT',          icon: '🗄️', color: 0x3cacff, hex: '#3cacff' },
+        { id: 'os',   label: 'OPERATING\\nSYSTEMS',            icon: '⚙️', color: 0xa259ff, hex: '#a259ff' },
+        { id: 'cn',   label: 'COMPUTER\\nNETWORKS',            icon: '🌐', color: 0xff6b35, hex: '#ff6b35' },
+        { id: 'ml',   label: 'MACHINE\\nLEARNING',             icon: '🤖', color: 0xffd60a, hex: '#ffd60a' },
+      ],
+      class11: [
+        { id: 'ph11', label: 'PHYSICS',           icon: '⚡', color: 0x3cacff, hex: '#3cacff' },
+        { id: 'ch11', label: 'CHEMISTRY',         icon: '🧪', color: 0x3dff9a, hex: '#3dff9a' },
+        { id: 'ma11', label: 'MATHEMATICS',       icon: '📐', color: 0xffd60a, hex: '#ffd60a' },
+        { id: 'bi11', label: 'BIOLOGY',           icon: '🧬', color: 0xff6b35, hex: '#ff6b35' },
+        { id: 'cs11', label: 'COMPUTER\\nSCIENCE', icon: '💻', color: 0xa259ff, hex: '#a259ff' },
+      ],
+      class12: [
+        { id: 'ph12', label: 'PHYSICS',           icon: '⚡', color: 0x3cacff, hex: '#3cacff' },
+        { id: 'ch12', label: 'CHEMISTRY',         icon: '🧪', color: 0x3dff9a, hex: '#3dff9a' },
+        { id: 'ma12', label: 'MATHEMATICS',       icon: '📐', color: 0xffd60a, hex: '#ffd60a' },
+        { id: 'bi12', label: 'BIOLOGY',           icon: '🧬', color: 0xff6b35, hex: '#ff6b35' },
+        { id: 'cs12', label: 'COMPUTER\\nSCIENCE', icon: '💻', color: 0xa259ff, hex: '#a259ff' },
+      ],`;
+
+const newCourses = `      college: [
+        { id: 'dsa',  label: 'DATA STRUCTURES\\n& ALGORITHMS', icon: '🌲', color: 0x3dff9a, hex: '#3dff9a', url: 'dsa' },
+        { id: 'dbms', label: 'DATABASE\\nMANAGEMENT',          icon: '🗄️', color: 0x3cacff, hex: '#3cacff', url: 'dbms' },
+        { id: 'os',   label: 'OPERATING\\nSYSTEMS',            icon: '⚙️', color: 0xa259ff, hex: '#a259ff', url: 'os' },
+        { id: 'cn',   label: 'COMPUTER\\nNETWORKS',            icon: '🌐', color: 0xff6b35, hex: '#ff6b35', url: 'cn' },
+        { id: 'ml',   label: 'MACHINE\\nLEARNING',             icon: '🤖', color: 0xffd60a, hex: '#ffd60a', url: 'ml' },
+      ],
+      class11: [
+        { id: 'ph11', label: 'PHYSICS',           icon: '⚡', color: 0x3cacff, hex: '#3cacff', url: 'physics-11' },
+        { id: 'ch11', label: 'CHEMISTRY',         icon: '🧪', color: 0x3dff9a, hex: '#3dff9a', url: 'chemistry-11' },
+        { id: 'ma11', label: 'MATHEMATICS',       icon: '📐', color: 0xffd60a, hex: '#ffd60a', url: 'maths-11' },
+        { id: 'bi11', label: 'BIOLOGY',           icon: '🧬', color: 0xff6b35, hex: '#ff6b35', url: 'biology-11' },
+        { id: 'cs11', label: 'COMPUTER\\nSCIENCE', icon: '💻', color: 0xa259ff, hex: '#a259ff', url: 'cs-11' },
+      ],
+      class12: [
+        { id: 'ph12', label: 'PHYSICS',           icon: '⚡', color: 0x3cacff, hex: '#3cacff', url: 'physics-12' },
+        { id: 'ch12', label: 'CHEMISTRY',         icon: '🧪', color: 0x3dff9a, hex: '#3dff9a', url: 'chemistry-12' },
+        { id: 'ma12', label: 'MATHEMATICS',       icon: '📐', color: 0xffd60a, hex: '#ffd60a', url: 'maths-12' },
+        { id: 'bi12', label: 'BIOLOGY',           icon: '🧬', color: 0xff6b35, hex: '#ff6b35', url: 'biology-12' },
+        { id: 'cs12', label: 'COMPUTER\\nSCIENCE', icon: '💻', color: 0xa259ff, hex: '#a259ff', url: 'cs-12' },
+      ],`;
+
+if (code.includes('// Notice the URL here is just')) {
+  code = code.replace(oldCourses, newCourses);
+  console.log('  courses patched');
+} else {
+  console.log('  courses already patched or format differs - skipping');
+}
+
+// Fix 2: Fix onClick handler to use url || id as fallback
+const oldClick = `    const onClick = () => {
+      if (!hovered || !hovered.userData.url) return;
+      // ROUTES TO /learn/dsa
+      navigate(\`/learn/\${hovered.userData.url}\`);
+    };`;
+const newClick = `    const onClick = () => {
+      if (!hovered) return;
+      const dest = hovered.userData.url || hovered.userData.id;
+      if (!dest) return;
+      navigate(\`/learn/\${dest}\`);
+    };`;
+
+if (code.includes("if (!hovered || !hovered.userData.url)")) {
+  code = code.replace(oldClick, newClick);
+  console.log('  onClick patched');
+} else {
+  console.log('  onClick already patched - skipping');
+}
+
+fs.writeFileSync(path, code);
+JSEOF
+echo "✅ src/pages/SubjectSelection.jsx done"
+
+# ── 4. src/pages/LessonViewer.jsx ─────────────────────────────
+cat > src/pages/LessonViewer.jsx << 'ENDOFFILE'
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
@@ -377,3 +665,13 @@ export default function LessonViewer() {
     </div>
   );
 }
+ENDOFFILE
+echo "✅ src/pages/LessonViewer.jsx done"
+
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "✅ All files patched! Now run:"
+echo "   git add ."
+echo "   git commit -m 'fix: routing + DSA filter + lesson viewer'"
+echo "   git push"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

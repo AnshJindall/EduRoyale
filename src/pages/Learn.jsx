@@ -8,19 +8,15 @@ import { MASCOT, MASCOT_ALT } from '../mascot';
 export default function Learn() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { subjectId } = useParams(); // Catches the 'dsa' from /learn/dsa
-  
+  const { subjectId } = useParams();
+
   const [modules, setModules] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  // Auto-set filter from URL param: /learn/dsa → filter to 'DSA'
-  // Normalize: subjectId 'dsa' → match against module.subject 'DSA' (case-insensitive)
   const [activeSubject, setActiveSubject] = useState(
     subjectId ? subjectId.toUpperCase() : 'All'
   );
 
   useEffect(() => {
-    // Re-sync filter if the URL param changes (e.g. navigating between subjects)
     setActiveSubject(subjectId ? subjectId.toUpperCase() : 'All');
   }, [subjectId]);
 
@@ -31,45 +27,39 @@ export default function Learn() {
           .from('modules')
           .select('*')
           .order('created_at', { ascending: true });
-
         if (error) throw error;
         if (data) setModules(data);
       } catch (error) {
-        console.error("Error fetching modules:", error.message);
+        console.error('Error fetching modules:', error.message);
       } finally {
         setLoading(false);
       }
     }
-
     fetchModules();
   }, []);
 
-  // Filter modules based on the selected subject tab
-  // Support both exact match and case-insensitive partial match (e.g. 'DSA' matches subject 'DSA')
   const filteredModules = activeSubject === 'All'
     ? modules
-    : modules.filter(m =>
-        m.subject && m.subject.toUpperCase() === activeSubject.toUpperCase()
-      );
+    : modules.filter(m => m.subject && m.subject.toUpperCase() === activeSubject.toUpperCase());
 
-  // Get unique subjects for the tabs
   const subjects = ['All', ...new Set(modules.map(m => m.subject).filter(Boolean))];
 
   const handleStartModule = (mod) => {
-    // Route to lesson viewer: /learn/<subjectId>/<moduleId>
     const subject = subjectId || (mod.subject ? mod.subject.toLowerCase() : 'general');
     navigate(`/learn/${subject}/${mod.id}`);
   };
 
-  if (loading) return <div style={{ color: 'var(--white)', padding: '100px', textAlign: 'center', fontFamily: '"Press Start 2P", monospace' }}>LOADING DATABANKS...</div>;
+  if (loading) return (
+    <div style={{ color: 'var(--white)', padding: '100px', textAlign: 'center', fontFamily: '"Press Start 2P", monospace' }}>
+      LOADING DATABANKS...
+    </div>
+  );
 
   return (
     <div className="page-wrap">
-      
-      {/* 3D NAV BACK BUTTON */}
-      <button 
-        onClick={() => navigate('/learn')} 
-        className="px-btn px-btn-o" 
+      <button
+        onClick={() => navigate('/learn')}
+        className="px-btn px-btn-o"
         style={{ marginBottom: '24px', fontSize: '10px' }}
       >
         ◀ BACK TO SUBJECTS
@@ -95,7 +85,7 @@ export default function Learn() {
       {/* Subject Filter Tabs */}
       <div style={{ display: 'flex', gap: '12px', marginBottom: '32px', overflowX: 'auto', paddingBottom: '8px' }}>
         {subjects.map(subject => (
-          <button 
+          <button
             key={subject}
             onClick={() => setActiveSubject(subject)}
             className={`px-btn ${activeSubject === subject ? 'px-btn-b' : 'px-btn-o'}`}
@@ -111,17 +101,16 @@ export default function Learn() {
           <div style={{ color: 'var(--muted)' }}>No modules found for this subject.</div>
         ) : (
           filteredModules.map((mod) => (
-            <div key={mod.id} style={{ 
-              background: 'var(--card)', 
+            <div key={mod.id} style={{
+              background: 'var(--card)',
               border: `3px solid ${mod.is_locked ? 'var(--border)' : 'var(--blue)'}`,
               padding: '20px',
               display: 'flex',
               flexDirection: 'column',
               opacity: mod.is_locked ? 0.6 : 1
             }}>
-              
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
-                <span className="chip" style={{ 
+                <span className="chip" style={{
                   color: mod.difficulty === 'Beginner' ? 'var(--green)' : mod.difficulty === 'Boss' ? 'var(--pink)' : 'var(--yellow)',
                   borderColor: mod.difficulty === 'Beginner' ? 'var(--green)' : mod.difficulty === 'Boss' ? 'var(--pink)' : 'var(--yellow)'
                 }}>
@@ -131,17 +120,14 @@ export default function Learn() {
                   +{mod.xp_reward} XP
                 </span>
               </div>
-
               <h2 style={{ fontFamily: '"Press Start 2P", monospace', fontSize: '14px', color: 'var(--white)', marginBottom: '8px', lineHeight: '1.4' }}>
                 {mod.title}
               </h2>
-              
               <p style={{ color: 'var(--muted)', fontSize: '16px', marginBottom: '24px', flex: 1 }}>
                 {mod.description}
               </p>
-
-              <button 
-                className={`px-btn ${mod.is_locked ? 'px-btn-o' : 'px-btn-b'}`} 
+              <button
+                className={`px-btn ${mod.is_locked ? 'px-btn-o' : 'px-btn-b'}`}
                 style={{ width: '100%', justifyContent: 'center' }}
                 onClick={() => handleStartModule(mod)}
                 disabled={mod.is_locked}
@@ -152,7 +138,6 @@ export default function Learn() {
           ))
         )}
       </div>
-
     </div>
   );
 }
