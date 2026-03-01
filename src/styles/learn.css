@@ -199,3 +199,26 @@
 .cx-val  { font-family: 'Press Start 2P', monospace; font-size: 10px; }
 .cx-g { color: var(--green); } .cx-y { color: var(--yellow); } .cx-r { color: var(--pink); }
 .cx-reasoning { font-size: 15px; color: rgba(255,255,255,.4); margin-top: 6px; line-height: 1.4; }
+/* =================================================================
+   NAV 3D OVERLAY - Subject Selection
+================================================================= */
+#nav-3d-container { position: fixed; inset: 0; z-index: 10000; background: #06050f; overflow: hidden; }
+#nav3d-title { position: absolute; top: 78px; left: 0; right: 0; text-align: center; z-index: 10002; pointer-events: none; }
+.n3t-line1 { display: block; font-family: 'Press Start 2P', monospace; font-size: clamp(11px, 1.8vw, 20px); color: #f0eeff; text-shadow: 3px 3px 0 rgba(0,0,0,.6); margin-bottom: 8px; }
+.n3t-line2 { display: block; font-family: 'Press Start 2P', monospace; font-size: clamp(20px, 4vw, 46px); color: #3dff9a; text-shadow: 3px 3px 0 #1a8a4a, 0 0 28px rgba(61,255,154,.6); animation: flicker 5s infinite; }
+.n3t-cursor { display: inline-block; color: #3dff9a; animation: blink 0.7s step-end infinite; margin-left: 6px; }
+
+#nav3d-back { position: absolute; top: 16px; left: 20px; z-index: 10002; font-family: 'Press Start 2P', monospace; font-size: 9px; color: rgba(240,238,255,.5); padding: 9px 14px; border: 2px solid rgba(255,255,255,.1); background: rgba(255,255,255,.04); cursor: pointer; clip-path: polygon(0 3px,3px 3px,3px 0,calc(100% - 3px) 0,calc(100% - 3px) 3px,100% 3px,100% calc(100% - 3px),calc(100% - 3px) calc(100% - 3px),calc(100% - 3px) 100%,3px 100%,3px calc(100% - 3px),0 calc(100% - 3px)); transition: .1s; }
+#nav3d-back:hover { color:#3dff9a; border-color:rgba(61,255,154,.4); background:rgba(61,255,154,.07); text-shadow:0 0 8px #3dff9a; }
+
+#level-toggle { position: absolute; bottom: 68px; left: 50%; transform: translateX(-50%); display: flex; z-index: 10002; border: 2px solid rgba(255,255,255,.1); clip-path: polygon(0 4px,4px 4px,4px 0,calc(100% - 4px) 0,calc(100% - 4px) 4px,100% 4px,100% calc(100% - 4px),calc(100% - 4px) calc(100% - 4px),calc(100% - 4px) 100%,4px 100%,4px calc(100% - 4px),0 calc(100% - 4px)); }
+.ltog-btn { font-family: 'Press Start 2P', monospace; font-size: 9px; padding: 9px 22px; border: none; border-right: 2px solid rgba(255,255,255,.08); background: rgba(255,255,255,.05); color: rgba(240,238,255,.38); cursor: pointer; }
+.ltog-btn.active { background: #3dff9a; color: #000; }
+
+#page-dots { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; z-index: 10002; }
+.page-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,.18); cursor: pointer; }
+.page-dot.active { background: #3dff9a; transform: scale(1.45); box-shadow: 0 0 7px #3dff9a; }
+
+.ice-label { position: absolute; display: none; flex-direction: column; align-items: center; gap: 7px; pointer-events: none; transform: translate(-50%, -50%); opacity: 0; transition: opacity 0.35s; z-index: 10001; text-align: center; }
+.ice-icon { font-size: 22px; }
+.ice-name { font-family: 'Press Start 2P', monospace; font-size: 8px; color: #f0eeff; line-height: 1.9; background: rgba(6,5,15,.85); padding: 7px 11px; border: 2px solid rgba(255,255,255,.12); }

@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import '../styles/learn.css'; 
 
 export default function Learn() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const { subjectId } = useParams(); // Catches the 'dsa' from /learn/dsa
+  
   const [modules, setModules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeSubject, setActiveSubject] = useState('All');
@@ -54,9 +58,20 @@ export default function Learn() {
   return (
     <div className="page-wrap">
       
+      {/* 3D NAV BACK BUTTON */}
+      <button 
+        onClick={() => navigate('/learn')} 
+        className="px-btn px-btn-o" 
+        style={{ marginBottom: '24px', fontSize: '10px' }}
+      >
+        ◀ BACK TO SUBJECTS
+      </button>
+
       <div className="page-header" style={{ marginBottom: '32px' }}>
         <div className="chip chip-b">📖 KNOWLEDGE ARCHIVE</div>
-        <h1 style={{ color: 'var(--blue)', textShadow: '3px 3px 0 var(--bd)', marginTop: '12px' }}>LEARNING MODULES</h1>
+        <h1 style={{ color: 'var(--blue)', textShadow: '3px 3px 0 var(--bd)', marginTop: '12px' }}>
+          {subjectId ? `${subjectId.toUpperCase()} MODULES` : 'LEARNING MODULES'}
+        </h1>
         <p style={{ color: 'var(--muted)', marginTop: '8px' }}>Master concepts to increase your global ELO and unlock new battle arenas.</p>
       </div>
 
