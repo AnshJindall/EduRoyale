@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import '../styles/learn.css'; 
+import { useNavigate } from 'react-router-dom'; // <-- Add this import at the top
 
 export default function Learn() {
   const { user } = useAuth();
-  const [modules, setModules] = useState([]);
+  const navigate = useNavigate(); // <-- Add this hook
+    const [modules, setModules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeSubject, setActiveSubject] = useState('All');
 
@@ -38,18 +40,14 @@ export default function Learn() {
   // Get unique subjects for the tabs
   const subjects = ['All', ...new Set(modules.map(m => m.subject))];
 
-  const handleStartModule = (moduleId) => {
+const handleStartModule = (moduleId) => {
     if (!user) {
       alert("Please login to start a module and earn XP!");
       return;
     }
-    // Here you would route them to the actual lesson page
-    // e.g., navigate(`/learn/${moduleId}`)
-    console.log(`Starting module: ${moduleId}`);
-    alert("Module started! (Add routing here later)");
-  };
-
-  if (loading) return <div style={{ color: 'var(--white)', padding: '100px', textAlign: 'center', fontFamily: '"Press Start 2P", monospace' }}>LOADING DATABANKS...</div>;
+    // 👇 Replace the alert with this router navigation
+    navigate(`/learn/${moduleId}`);
+  };  if (loading) return <div style={{ color: 'var(--white)', padding: '100px', textAlign: 'center', fontFamily: '"Press Start 2P", monospace' }}>LOADING DATABANKS...</div>;
 
   return (
     <div className="page-wrap">
